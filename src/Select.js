@@ -2,31 +2,47 @@ import React from "react";
 
 export default class Select extends React.Component {
     state = {
-        opened: false,
-        selectedValue: this.props.defaultValue,
+        opened: this.props.opened || false,
+        selectedValue: this.props.selectedValue || this.props.defaultValue,
+    };
+
+    isControlled = () => {
+        const { selectedValue, onSelect } = this.props;
+
+        return selectedValue !== undefined && typeof onSelect === "function";
     };
 
     toggleOpened = () => {
-        this.setState({
-            opened: !this.state.opened,
-        });
+        if (this.isControlled()) {
+            this.props.onOpen();
+        } else {
+            this.setState({
+                opened: !this.state.opened,
+            });
+        }
     };
 
     selectOption = value => {
-        this.setState({
-            selectedValue: value,
-        });
+        if (this.isControlled()) {
+            this.props.onSelect(value);
+        } else {
+            this.setState({
+                selectedValue: value,
+            });
 
-        this.toggleOpened();
+            this.toggleOpened();
+        }
     };
 
     render() {
-        const { children: options } = this.props;
+        const { children: options, selectedValue, opened } = this.props;
 
-        if (this.state.opened) {
+        const value = this.props.selectedValue || this.state.selectedValue;
+
+        if (opened || this.state.opened) {
             return React.Children.map(options, option => {
                 return React.cloneElement(option, {
-                    active: option.props.value === this.state.selectedValue,
+                    active: option.props.value === value,
                     onSelect: () => this.selectOption(option.props.value),
                 });
             });
@@ -35,7 +51,7 @@ export default class Select extends React.Component {
             let selectedOption;
 
             React.Children.forEach(options, option => {
-                if (option.props.value === this.state.selectedValue) {
+                if (option.props.value === value) {
                     selectedOption = option;
                 }
             });
